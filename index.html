@@ -1,0 +1,1063 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Spelling Bee Practice — Shareable</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #fffdf7;
+        --surface: #ffffff;
+        --surface-2: #fff6dd;
+        --ink: #2b2118;
+        --ink-soft: #6f5f4c;
+        --line: #eadfc6;
+        --honey: #f5b301;
+        --honey-deep: #c98f00;
+        --honey-soft: #ffedb3;
+        --good: #1e8e4f;
+        --good-bg: #e2f6e9;
+        --bad: #cf3a30;
+        --bad-bg: #fdeae8;
+        --charcoal: #2b2118;
+        --radius: 18px;
+        --shadow: 0 6px 24px rgba(90, 62, 0, .10);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #171310;
+          --surface: #241d16;
+          --surface-2: #2e2517;
+          --ink: #f7ecd4;
+          --ink-soft: #c4ae8b;
+          --line: #453723;
+          --honey: #ffb81e;
+          --honey-deep: #ffc94d;
+          --honey-soft: #4a3a12;
+          --good: #4ade80;
+          --good-bg: #14301f;
+          --bad: #ff8a80;
+          --bad-bg: #3d1a16;
+          --charcoal: #f7ecd4;
+          --shadow: 0 6px 24px rgba(0,0,0,.45);
+        }
+      }
+      * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
+      html { -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Nunito", system-ui, -apple-system, sans-serif;
+        font-weight: 700;
+        line-height: 1.45;
+      }
+      button { font: inherit; cursor: pointer; }
+      button:focus-visible, input:focus-visible, a:focus-visible {
+        outline: 3px solid var(--honey-deep);
+        outline-offset: 2px;
+      }
+      .wrap { max-width: 860px; margin: 0 auto; padding: 20px 16px 56px; }
+
+      /* ---------- header strip ---------- */
+      .topbar {
+        display: flex; align-items: center; gap: 12px;
+        padding: 6px 2px 18px;
+      }
+      .bee-badge {
+        width: 52px; height: 52px; flex: 0 0 auto;
+        background: var(--honey);
+        border-radius: 16px;
+        display: grid; place-items: center;
+        box-shadow: var(--shadow);
+      }
+      .bee-badge svg { width: 34px; height: 34px; }
+      .topbar h1 {
+        font-family: "Fredoka", "Nunito", sans-serif;
+        font-size: clamp(24px, 5vw, 34px);
+        font-weight: 700; margin: 0; letter-spacing: .2px;
+      }
+      .topbar p { margin: 2px 0 0; color: var(--ink-soft); font-size: 15px; font-weight: 800; }
+
+      /* ---------- generic ---------- */
+      .view { display: none; }
+      .view.active { display: block; }
+      .card {
+        background: var(--surface);
+        border: 2px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+      }
+      .btn {
+        border: 2px solid var(--charcoal);
+        background: var(--surface);
+        color: var(--ink);
+        border-radius: 999px;
+        padding: 12px 22px;
+        font-weight: 900;
+        font-size: 17px;
+        display: inline-flex; align-items: center; gap: 9px;
+        min-height: 52px;
+        transition: transform .08s ease, background .15s ease;
+      }
+      .btn:active { transform: scale(.97); }
+      .btn.primary { background: var(--honey); border-color: var(--charcoal); color: #2b2118; }
+      .btn.primary:hover { background: #ffc61a; }
+      .btn.ghost { border-color: var(--line); }
+      .btn.small { min-height: 44px; padding: 8px 16px; font-size: 15px; }
+      .btn:disabled { opacity: .45; cursor: not-allowed; }
+      .btn svg { width: 20px; height: 20px; flex: 0 0 auto; }
+
+      /* ---------- level grid ---------- */
+      .section-title {
+        font-family: "Fredoka", sans-serif;
+        font-size: 22px; font-weight: 600; margin: 8px 0 4px;
+      }
+      .section-sub { color: var(--ink-soft); margin: 0 0 16px; font-size: 15px; }
+      .levels { display: grid; grid-template-columns: 1fr; gap: 14px; }
+      @media (min-width: 640px) { .levels { grid-template-columns: 1fr 1fr; } }
+      .level-card { padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+      .level-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+      .level-num {
+        font-family: "Fredoka", sans-serif;
+        background: var(--charcoal); color: var(--bg);
+        font-size: 14px; font-weight: 600;
+        padding: 4px 12px; border-radius: 999px; letter-spacing: .4px;
+      }
+      @media (prefers-color-scheme: dark) { .level-num { color: #241d16; background: var(--honey); } }
+      .level-name { font-family: "Fredoka", sans-serif; font-size: 21px; font-weight: 600; }
+      .level-meta { color: var(--ink-soft); font-size: 14px; font-weight: 800; }
+      .level-stats { display: flex; gap: 8px; flex-wrap: wrap; }
+      .stat-chip {
+        background: var(--surface-2); border: 1.5px solid var(--line);
+        border-radius: 999px; padding: 4px 12px; font-size: 13.5px; font-weight: 900;
+      }
+      .stat-chip b { color: var(--honey-deep); }
+      .level-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 2px; }
+      .wordlist { display: none; border-top: 2px dashed var(--line); padding-top: 12px; }
+      .wordlist.open { display: block; }
+      .wordlist .words {
+        display: flex; flex-wrap: wrap; gap: 6px;
+        max-height: 240px; overflow-y: auto; padding-right: 4px;
+      }
+      .wordlist .w {
+        background: var(--surface-2); border: 1.5px solid var(--line);
+        padding: 3px 10px; border-radius: 8px; font-size: 14.5px; font-weight: 800;
+      }
+      .wordlist .w.mastered { background: var(--good-bg); border-color: var(--good); }
+      .wordlist .w.tricky { background: var(--bad-bg); border-color: var(--bad); }
+
+      .tricky-banner {
+        margin: 0 0 18px; padding: 16px 18px;
+        display: none; align-items: center; gap: 14px; flex-wrap: wrap;
+        background: var(--bad-bg); border: 2px solid var(--bad); border-radius: var(--radius);
+      }
+      .tricky-banner.show { display: flex; }
+      .tricky-banner p { margin: 0; flex: 1 1 220px; font-size: 16px; }
+      .rounds-log { margin-top: 26px; }
+      .rounds-log ul { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
+      .rounds-log li {
+        background: var(--surface); border: 2px solid var(--line); border-radius: 12px;
+        padding: 10px 14px; font-size: 15px; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+      }
+      .rounds-log .score { font-weight: 900; color: var(--honey-deep); }
+      .empty-note { color: var(--ink-soft); font-size: 15px; }
+
+      /* ---------- practice ---------- */
+      .practice-head {
+        display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+        margin-bottom: 14px;
+      }
+      .progress-track {
+        height: 14px; background: var(--surface-2); border: 2px solid var(--line);
+        border-radius: 999px; overflow: hidden; flex: 1 1 160px;
+      }
+      .progress-fill { height: 100%; background: var(--honey); width: 0%; transition: width .3s ease; }
+      .practice-card { padding: 22px 18px 26px; text-align: center; }
+      .prompt-label { color: var(--ink-soft); font-weight: 900; font-size: 15px; letter-spacing: .6px; text-transform: uppercase; }
+      .hear-row { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin: 16px 0 6px; }
+      .hear-btn {
+        width: 108px; height: 108px; border-radius: 50%;
+        background: var(--honey); border: 3px solid var(--charcoal); color: #2b2118;
+        display: grid; place-items: center; gap: 0;
+        box-shadow: var(--shadow);
+      }
+      .hear-btn svg { width: 44px; height: 44px; }
+      .hear-btn span { font-size: 13px; font-weight: 900; display: block; margin-top: 2px; }
+      .hear-btn.slow { width: 84px; height: 84px; background: var(--surface); color: var(--ink); border-color: var(--line); align-self: center; }
+      .hear-btn.slow svg { width: 32px; height: 32px; }
+      .hear-btn.playing { animation: pulse 0.9s ease-in-out infinite; }
+      @keyframes pulse { 0%,100% { transform: scale(1);} 50% { transform: scale(1.06);} }
+      @media (prefers-reduced-motion: reduce) { .hear-btn.playing { animation: none; } .btn:active { transform: none; } }
+      .hint-line { color: var(--ink-soft); font-size: 14.5px; min-height: 22px; margin: 4px 0 0; }
+
+      .mode-tabs {
+        display: inline-flex; background: var(--surface-2); border: 2px solid var(--line);
+        border-radius: 999px; padding: 4px; gap: 4px; margin: 18px 0 4px;
+      }
+      .mode-tabs button {
+        border: none; background: transparent; color: var(--ink-soft);
+        border-radius: 999px; padding: 10px 22px; font-weight: 900; font-size: 16px;
+        display: inline-flex; align-items: center; gap: 8px; min-height: 46px;
+      }
+      .mode-tabs button[aria-selected="true"] { background: var(--charcoal); color: var(--bg); }
+      @media (prefers-color-scheme: dark) { .mode-tabs button[aria-selected="true"] { background: var(--honey); color: #241d16; } }
+      .mode-tabs svg { width: 19px; height: 19px; }
+
+      .answer-zone { max-width: 560px; margin: 10px auto 0; }
+      .type-input {
+        width: 100%; font: inherit; font-size: 26px; font-weight: 900; text-align: center;
+        padding: 14px 16px; border-radius: 14px; border: 3px solid var(--line);
+        background: var(--surface); color: var(--ink); letter-spacing: 2px;
+      }
+      .type-input:focus { border-color: var(--honey); outline: none; }
+
+      .mic-btn {
+        width: 92px; height: 92px; border-radius: 50%;
+        background: var(--surface); border: 3px solid var(--charcoal); color: var(--ink);
+        display: grid; place-items: center; margin: 6px auto 4px;
+      }
+      .mic-btn svg { width: 40px; height: 40px; }
+      .mic-btn.listening { background: var(--bad); border-color: var(--bad); color: #fff; animation: pulse 1.1s ease-in-out infinite; }
+      .mic-status { font-size: 15px; color: var(--ink-soft); min-height: 22px; margin: 2px 0 8px; }
+      .heard-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; min-height: 46px; align-items: center; }
+      .letter-chip {
+        min-width: 40px; height: 46px; padding: 0 8px;
+        display: inline-grid; place-items: center;
+        background: var(--surface-2); border: 2px solid var(--charcoal); border-radius: 10px;
+        font-family: "Fredoka", sans-serif; font-size: 22px; font-weight: 600; text-transform: uppercase;
+      }
+      .letter-chip.space { min-width: 58px; font-size: 12px; text-transform: none; color: var(--ink-soft); border-style: dashed; }
+      .heard-empty { color: var(--ink-soft); font-size: 15px; }
+      .heard-tools { display: flex; gap: 8px; justify-content: center; margin-top: 8px; flex-wrap: wrap; }
+      .tool-btn {
+        border: 2px solid var(--line); background: var(--surface); color: var(--ink);
+        border-radius: 999px; padding: 7px 16px; font-weight: 900; font-size: 14.5px; min-height: 40px;
+      }
+      .check-row { margin-top: 20px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+      .voice-note { color: var(--ink-soft); font-size: 14px; margin-top: 10px; }
+
+      /* ---------- microphone help ---------- */
+      .mic-help {
+        text-align: left; margin: 16px auto 0; max-width: 540px;
+        background: var(--bad-bg); border: 2px solid var(--bad); border-radius: 14px;
+        padding: 16px 18px;
+      }
+      .mic-help h3 { font-family: "Fredoka", sans-serif; font-size: 19px; font-weight: 600; margin: 0 0 4px; color: var(--bad); }
+      .mic-help p { font-size: 15px; margin: 6px 0; }
+      .mic-help ol { margin: 8px 0 10px 20px; padding: 0; font-size: 15px; }
+      .mic-help ol li { margin: 6px 0; }
+      .mic-help .heard-tools { justify-content: flex-start; margin-top: 10px; }
+      .mic-help .workaround { border-top: 1.5px dashed var(--bad); padding-top: 10px; margin-top: 12px; }
+
+      /* ---------- feedback ---------- */
+      .feedback { display: none; margin-top: 22px; text-align: center; }
+      .feedback.show { display: block; }
+      .feedback h2 { font-family: "Fredoka", sans-serif; font-size: 30px; margin: 0 0 6px; }
+      .feedback.correct h2 { color: var(--good); }
+      .feedback.wrong h2 { color: var(--bad); }
+      .feedback p { margin: 4px 0; font-size: 16.5px; }
+      .feedback .heard-as { font-weight: 900; font-size: 18px; letter-spacing: .4px; }
+      .compare { margin: 16px auto 4px; max-width: 620px; }
+      .compare .row-label { font-size: 13px; font-weight: 900; letter-spacing: .8px; text-transform: uppercase; color: var(--ink-soft); margin: 12px 0 6px; }
+      .compare-row { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
+      .cmp-chip {
+        min-width: 36px; height: 44px; padding: 0 6px; display: inline-grid; place-items: center;
+        border-radius: 9px; font-family: "Fredoka", sans-serif; font-size: 20px; font-weight: 600; text-transform: uppercase;
+        border: 2px solid var(--line); background: var(--surface-2);
+      }
+      .cmp-chip.ok { background: var(--good-bg); border-color: var(--good); color: var(--good); }
+      .cmp-chip.no { background: var(--bad-bg); border-color: var(--bad); color: var(--bad); }
+      .cmp-chip.space { min-width: 50px; font-size: 11px; text-transform: none; }
+      .star-row { font-size: 26px; letter-spacing: 4px; color: var(--honey-deep); min-height: 34px; }
+
+      /* ---------- results ---------- */
+      .results-card { padding: 28px 20px; text-align: center; }
+      .results-card h2 { font-family: "Fredoka", sans-serif; font-size: 32px; margin: 0 0 4px; }
+      .big-score { font-family: "Fredoka", sans-serif; font-size: 64px; font-weight: 700; color: var(--honey-deep); line-height: 1.1; }
+      .results-card p { font-size: 17px; margin: 6px 0; }
+      .missed-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 14px 0 4px; }
+      .missed-list .w { background: var(--bad-bg); border: 1.5px solid var(--bad); padding: 5px 14px; border-radius: 999px; font-weight: 900; }
+      .results-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
+      .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="topbar">
+        <div class="bee-badge" aria-hidden="true">
+          <svg viewBox="0 0 48 48" fill="none"><ellipse cx="24" cy="27" rx="13" ry="11" fill="#2b2118"/><rect x="17" y="18" width="4.5" height="19" rx="2.25" fill="#f5b301"/><rect x="26.5" y="18" width="4.5" height="19" rx="2.25" fill="#f5b301"/><ellipse cx="17" cy="13" rx="7" ry="5" fill="#fff" opacity=".85" transform="rotate(-24 17 13)"/><ellipse cx="31" cy="13" rx="7" ry="5" fill="#fff" opacity=".85" transform="rotate(24 31 13)"/><circle cx="20.5" cy="25" r="1.6" fill="#fff"/><path d="M36 27l6 2.5-6 2.5" fill="#2b2118"/></svg>
+        </div>
+        <div>
+          <h1>Spelling Bee Practice</h1>
+          <p>2026–2027 School Spelling Bee study list · 450 words · 6 levels</p>
+        </div>
+      </div>
+
+      <!-- ============ HOME ============ -->
+      <section id="view-home" class="view active" aria-label="Choose a level">
+        <div id="trickyBanner" class="tricky-banner" role="region" aria-label="Tricky words">
+          <p id="trickyText"></p>
+          <button class="btn primary" id="trickyAllBtn" type="button">Practice tricky ones</button>
+        </div>
+
+        <h2 class="section-title">Pick a level</h2>
+        <p class="section-sub">Each round has 10 words, picked only from that level's page. Spell 3 times in a row correctly and a word is mastered.</p>
+        <div class="levels" id="levelsGrid"></div>
+
+        <div class="rounds-log">
+          <h2 class="section-title">Recent rounds</h2>
+          <div id="roundsLogBody"><p class="empty-note">No rounds yet this visit — pick a level and start spelling!</p></div>
+        </div>
+      </section>
+
+      <!-- ============ PRACTICE ============ -->
+      <section id="view-practice" class="view" aria-label="Practice round">
+        <div class="practice-head">
+          <button class="btn ghost small" id="quitBtn" type="button">← Levels</button>
+          <div class="progress-track" role="progressbar" aria-label="Round progress" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0" id="progressTrack">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <span class="stat-chip" id="roundPos">Word 1 of 10</span>
+          <span class="stat-chip">Score <b id="roundScore">0</b></span>
+        </div>
+
+        <div class="card practice-card">
+          <div class="prompt-label" id="promptLabel">Listen to the word</div>
+          <div class="hear-row">
+            <button class="hear-btn slow" id="slowBtn" type="button" aria-label="Hear the word slowly">
+              <span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor" stroke="none"/><path d="M15.5 9.5a4 4 0 0 1 0 5"/></svg>
+                <span>Slowly</span>
+              </span>
+            </button>
+            <button class="hear-btn" id="speakBtn" type="button" aria-label="Hear the word">
+              <span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor" stroke="none"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.4 6a9 9 0 0 1 0 12"/></svg>
+                <span>Hear it</span>
+              </span>
+            </button>
+            <div style="width:84px" aria-hidden="true"></div>
+          </div>
+          <p class="hint-line" id="hintLine"></p>
+
+          <div id="answerArea">
+            <div class="mode-tabs" role="tablist" aria-label="How to answer">
+              <button type="button" role="tab" id="tabSay" aria-selected="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>
+                Say it
+              </button>
+              <button type="button" role="tab" id="tabType" aria-selected="false">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M17 10h.01M7 14h10"/></svg>
+                Type it
+              </button>
+            </div>
+
+            <div class="answer-zone" id="sayZone">
+              <button class="mic-btn" id="micBtn" type="button" aria-label="Start spelling out loud">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>
+              </button>
+              <p class="mic-status" id="micStatus">Tap the microphone, then spell the word out loud — letter by letter.</p>
+              <div class="heard-row" id="heardRow" aria-live="polite"><span class="heard-empty">Your letters will appear here</span></div>
+              <div class="heard-tools">
+                <button class="tool-btn" id="undoLetterBtn" type="button">⌫ Remove last letter</button>
+                <button class="tool-btn" id="clearHeardBtn" type="button">Start over</button>
+              </div>
+              <p class="voice-note" id="voiceNote"></p>
+              <div class="mic-help" id="micHelp" hidden>
+                <h3>Microphone is blocked</h3>
+                <p id="micHelpShare" hidden><strong>Why there's no Microphone switch to find:</strong> this spelling page opens inside the Muse share page, and that outer page blocks the microphone before Chrome ever gets the request. That's why Chrome's permissions panel for this site lists only Sound — a Microphone option never appears for this page, and there is nothing in your Chrome settings to switch on. The keyboard trick below works instead.</p>
+                <div id="micHelpSteps">
+                  <p>To let Chrome use the microphone for this page:</p>
+                  <ol>
+                    <li>Tap the icon at the left end of Chrome's address bar (a lock, or a sliders/tune icon).</li>
+                    <li>Open <strong>Permissions</strong> / <strong>Site settings</strong> and set <strong>Microphone</strong> to <strong>Allow</strong>.</li>
+                    <li>Reload the page, tap the big microphone above, and tap <strong>Allow</strong> when Chrome asks.</li>
+                    <li>On a tablet, also check <strong>Settings → Apps → Chrome → Permissions</strong> and make sure Microphone is allowed for Chrome itself.</li>
+                  </ol>
+                </div>
+                <div class="heard-tools">
+                  <button class="tool-btn" id="micRetryBtn" type="button">Try the microphone again</button>
+                  <button class="tool-btn" id="micUseTypeBtn" type="button">Type it instead</button>
+                </div>
+                <p class="workaround"><strong>The fix that always works:</strong> tap “Type it instead,” tap the answer box, then tap the microphone key on the tablet's own keyboard and say the letters one by one, like “C — A — T.” The keyboard's microphone can't be blocked, and this app turns what it types into your spelling.</p>
+              </div>
+            </div>
+
+            <div class="answer-zone" id="typeZone" hidden>
+              <label class="sr-only" for="typeInput">Type the spelling</label>
+              <input class="type-input" id="typeInput" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="type the spelling…" />
+              <p class="voice-note"><strong>Want to say it instead?</strong> Tap the box, then tap the microphone key on the tablet keyboard and say the letters one by one — the keyboard's microphone can't be blocked, and this app will turn what it types into your spelling.</p>
+            </div>
+
+            <div class="check-row">
+              <button class="btn primary" id="checkBtn" type="button">Check my spelling</button>
+            </div>
+          </div>
+
+          <div class="feedback" id="feedback" aria-live="polite">
+            <div class="star-row" id="starRow" aria-hidden="true"></div>
+            <h2 id="feedbackTitle"></h2>
+            <p id="feedbackText"></p>
+            <p id="feedbackHeard" class="heard-as" hidden></p>
+            <div class="compare" id="compareBox"></div>
+            <div class="check-row">
+              <button class="btn primary" id="nextBtn" type="button">Next word →</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ RESULTS ============ -->
+      <section id="view-results" class="view" aria-label="Round results">
+        <div class="card results-card">
+          <h2 id="resultsTitle">Round complete!</h2>
+          <div class="big-score" id="resultsScore">0/10</div>
+          <p id="resultsText"></p>
+          <div id="resultsMissedWrap" hidden>
+            <p style="font-weight:900">Words to practice again:</p>
+            <div class="missed-list" id="resultsMissed"></div>
+          </div>
+          <div class="results-actions">
+            <button class="btn primary" id="againBtn" type="button">New round — same level</button>
+            <button class="btn" id="retryMissedBtn" type="button" hidden>Practice the tricky ones</button>
+            <button class="btn ghost" id="homeBtn" type="button">Choose a level</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      "use strict";
+
+      /* ================= Word lists (one level per study-list page) ================= */
+      var LEVELS = [
+        { name: "One Bee", page: "Page 1", words: ["ran","wind","leg","dirt","rod","good","most","hurt","shy","bunny","down","steps","drink","silly","sick","path","mist","stars","truck","fire","still","hello","bush","late","pump","shell","yarn","wings","sharp","easy","body","house","rich","shift","heart","tusk","shoot","seal","even","dive","claws","crack","come","fine","winter","apple","sound","mossy","yellow","shine","chips","beans","mouth","spray","year","truth","paper","rabbit","feed","tallest","inside","frozen","speak","cliffs","whale","market","flock","crunch","lizard","beware","sparkle","sweater","nurse","wrong","hopped","money"] },
+        { name: "Page 2", page: "Page 2", words: ["cabin","darkness","always","sprout","carve","shadows","morning","alive","earth","friend","lovely","return","half","swift","grandfather","footprints","fear","thirsty","peer","gentle","riddle","voice","peach","pancakes","illness","lead","groan","sloth","knit","cloak","parade","whistle","total","indoors","trouble","relax","finish","holiday","safety","stout","spiders","entire","library","guide","hospital","mustard","company","ginger","narrow","medium","pennies","hiking","foolish","afraid","remember","result","charming","source","pearls","tangy","beasts","shivering","barge","grumpily","smoothly","cottage","humble","seventy","dangle","distance","breeze","soared","frazzled","bamboo"] },
+        { name: "Two Bee", page: "Page 3", words: ["buttons","cuddle","puffy","tiptoed","clever","basement","burlap","wetlands","invite","butterflies","kelp","property","carefully","sniffling","beneath","tractor","permit","awning","fickle","relief","lunar","boycotting","molten","elite","woven","proclaim","thimble","custody","granola","warrior","rigid","fierce","laughter","salary","disappear","hurdler","lounge","jovial","inferior","December","duration","dictionary","business","reinstate","examine","versus","lullaby","opposite","tissues","marlin","Halloween","compliment","compromise","incident","Japanese","investment","bifocals","cutlery","chisel","fundraiser","geologist","bellowed","organism","quail","atmosphere","disappointment","truant","pamphlet","helium","suggested","chimpanzees","desperate","annoyance","interruption","concentrate","piñata"] },
+        { name: "Page 4", page: "Page 4", words: ["territory","stragglers","albino","ridiculous","monorail","exploratory","indigo","bratwurst","alphabetical","integrity","Oregon","rebuttal","prejudice","solidarity","calico","sputnik","cartridge","segregation","tortillas","civilian","fertilizer","apprentice","synthetic","Caesar","glamorous","salamanders","suspension","sorceress","fictitious","convertible","snarkiness","singularity","collateral","initiation","mascara","battalion","precedent","materialize","magnesium","perimeter","haddock","optometrist","meticulous","cosmodrome","hypothermia","schnauzer","megahertz","regolith","arthritis","persnickety","insurrection","pheasants","pentathletes","Senegal","fascism","duende","predecessor","Polaroid","reservoir","matrilineal","conscious","arnica","carrion","glaucoma","piteously","adrenaline","elliptical","staccato","iridium","romerillo","cemetery","dachshund","rendezvous","Aeolus"] },
+        { name: "Three Bee", page: "Page 5", words: ["newt","thrummed","censers","lapels","generosity","burnished","embankment","unrelenting","wallowing","imperial","mortar","arsonists","mewling","generator","persistent","authority","panoramic","Doberman","dominion","decisively","gauntlets","inanimate","lemmings","auditory","appetizing","sentinels","frequency","self-sufficient","prospective","subscription","blithely","conspicuous","preconception","procession","tenuous","perpendicular","hemisphere","seminal","saxophone","torrential","reluctance","consulate","canter","sauntered","propeller","modish","cuisine","juniper","settee","unconscious","influenza","palazzo","finesse","foliage","odorant","irrelevant","curriculum","quizzically","diplomatically","enigmatic","increments","crocheted","calibrate","hypothesis","reassurance","apologetic","credenza"] },
+        { name: "Page 6 — the hardest", page: "Page 6", words: ["comprehensible","protectorate","Delaware","phenomenon","trenchant","pulmonary","undulating","alleviate","despondent","approximation","phantasmal","legation","echolocation","glycerin","brazier","diffidence","conflagration","alabaster","arachnid","butane","thermotaxis","arugula","pathologically","cataract","inaugurate","vibrometer","affinities","quiche","bioluminescence","mayonnaise","embodiment","euphemism","chickadee","sputum","porpoises","acolyte","asymmetric","cerulean","psychological","innocuous","sharpei","cul-de-sac","assemblage","Tripoli","endothermy","electrolytes","leprosy","neurological","éclair","ototoxic","eureka","mysticetes","irascibility","Aphrodite","annelids","Eritrea","a cappella","bogong moth","kerosene","forsythia","Amharic","yakuza","Pennsylvania","salicylic acid","Gloucester","sensilla","ampulla","stomatopods","prosciutto","eponymous","solenodon","frankincense","chitinous","Presbyterian","Sierra Leone","trichobothria","Krio","lactobacillus","Bildungsroman","Cappadocia","Addis Ababa","spes phthisica","vibrissae"] }
+      ];
+
+      /* ================= Session state (this visit only) ================= */
+      var stats = LEVELS.map(function () {
+        return { attempted: 0, correct: 0, mastered: {}, streaks: {}, tricky: {} };
+      });
+      var roundsLog = []; // {label, score, total}
+
+      function allTricky() {
+        var out = [];
+        LEVELS.forEach(function (lv, i) {
+          Object.keys(stats[i].tricky).forEach(function (w) { out.push({ level: i, word: w }); });
+        });
+        return out;
+      }
+
+      /* ================= Helpers ================= */
+      function $(id) { return document.getElementById(id); }
+      function shuffle(arr) {
+        var a = arr.slice();
+        for (var i = a.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var t = a[i]; a[i] = a[j]; a[j] = t;
+        }
+        return a;
+      }
+      function normalize(s) {
+        return (s || "")
+          .toLowerCase()
+          .normalize("NFD").replace(/[̀-ͯ]/g, "") // strip accents: é→e, ñ→n
+          .replace(/\s+/g, " ")
+          .trim();
+      }
+      function showView(name) {
+        ["home", "practice", "results"].forEach(function (v) {
+          $("view-" + v).classList.toggle("active", v === name);
+        });
+        window.scrollTo({ top: 0 });
+      }
+
+      /* ================= Speech (pronouncer) ================= */
+      var ttsVoice = null;
+      function pickVoice() {
+        if (!("speechSynthesis" in window)) return;
+        var vs = window.speechSynthesis.getVoices();
+        for (var i = 0; i < vs.length; i++) {
+          if (/^en[-_]US/i.test(vs[i].lang)) { ttsVoice = vs[i]; return; }
+        }
+        for (var j = 0; j < vs.length; j++) {
+          if (/^en/i.test(vs[j].lang)) { ttsVoice = vs[j]; return; }
+        }
+      }
+      if ("speechSynthesis" in window) {
+        pickVoice();
+        window.speechSynthesis.onvoiceschanged = pickVoice;
+      }
+      function speakWord(word, slow) {
+        if (!("speechSynthesis" in window)) {
+          $("hintLine").textContent = "This browser can't speak the words out loud — ask a grown-up to read the word to you.";
+          return;
+        }
+        window.speechSynthesis.cancel();
+        var u = new SpeechSynthesisUtterance(word);
+        u.lang = "en-US";
+        if (ttsVoice) u.voice = ttsVoice;
+        u.rate = slow ? 0.55 : 0.92;
+        var btn = slow ? $("slowBtn") : $("speakBtn");
+        u.onstart = function () { btn.classList.add("playing"); };
+        u.onend = u.onerror = function () { btn.classList.remove("playing"); };
+        window.speechSynthesis.speak(u);
+      }
+
+      /* ================= Home / levels ================= */
+      function renderHome() {
+        var grid = $("levelsGrid");
+        grid.innerHTML = "";
+        LEVELS.forEach(function (lv, i) {
+          var st = stats[i];
+          var masteredCount = Object.keys(st.mastered).length;
+          var trickyCount = Object.keys(st.tricky).length;
+          var card = document.createElement("div");
+          card.className = "card level-card";
+          var title = "Level " + (i + 1);
+          var html =
+            '<div class="level-head"><span class="level-num">' + title.toUpperCase() + '</span>' +
+            '<span class="level-name">' + lv.name + '</span></div>' +
+            '<div class="level-meta">' + lv.words.length + ' words · from ' + lv.page + ' of the study list</div>' +
+            '<div class="level-stats">' +
+              '<span class="stat-chip">Mastered <b>' + masteredCount + '</b></span>' +
+              '<span class="stat-chip">Tried <b>' + st.attempted + '</b></span>' +
+              (trickyCount ? '<span class="stat-chip">Tricky <b>' + trickyCount + '</b></span>' : '') +
+            '</div>' +
+            '<div class="level-actions">' +
+              '<button class="btn primary" type="button" data-start="' + i + '">Start round</button>' +
+              '<button class="btn ghost" type="button" data-words="' + i + '" aria-expanded="false">See the words</button>' +
+              (trickyCount ? '<button class="btn" type="button" data-tricky="' + i + '">Tricky ones (' + trickyCount + ')</button>' : '') +
+            '</div>' +
+            '<div class="wordlist" id="wordlist-' + i + '"><div class="words">' +
+              lv.words.map(function (w) {
+                var cls = st.mastered[w] ? "w mastered" : (st.tricky[w] ? "w tricky" : "w");
+                return '<span class="' + cls + '">' + w + '</span>';
+              }).join("") +
+            '</div></div>';
+          card.innerHTML = html;
+          grid.appendChild(card);
+        });
+
+        grid.querySelectorAll("[data-start]").forEach(function (b) {
+          b.addEventListener("click", function () { startRound(parseInt(b.getAttribute("data-start"), 10), null); });
+        });
+        grid.querySelectorAll("[data-tricky]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            var i = parseInt(b.getAttribute("data-tricky"), 10);
+            startRound(i, Object.keys(stats[i].tricky));
+          });
+        });
+        grid.querySelectorAll("[data-words]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            var i = b.getAttribute("data-words");
+            var list = $("wordlist-" + i);
+            var open = list.classList.toggle("open");
+            b.setAttribute("aria-expanded", open ? "true" : "false");
+            b.textContent = open ? "Hide the words" : "See the words";
+          });
+        });
+
+        var tricky = allTricky();
+        var banner = $("trickyBanner");
+        if (tricky.length) {
+          banner.classList.add("show");
+          $("trickyText").textContent = "You have " + tricky.length + " tricky word" + (tricky.length === 1 ? "" : "s") + " from all levels waiting for another try.";
+        } else {
+          banner.classList.remove("show");
+        }
+
+        var logBody = $("roundsLogBody");
+        if (!roundsLog.length) {
+          logBody.innerHTML = '<p class="empty-note">No rounds yet this visit — pick a level and start spelling!</p>';
+        } else {
+          var ul = document.createElement("ul");
+          roundsLog.slice().reverse().slice(0, 6).forEach(function (r) {
+            var li = document.createElement("li");
+            li.innerHTML = "<span>" + r.label + "</span><span class='score'>" + r.score + " / " + r.total + "</span>";
+            ul.appendChild(li);
+          });
+          logBody.innerHTML = "";
+          logBody.appendChild(ul);
+        }
+      }
+
+      /* ================= Round engine ================= */
+      var round = null; // {level, queue:[{word, level}], idx, score, missed:[{word, level}], label}
+      var mode = "say";
+      var heard = [];   // array of chars (' ' and '-' allowed)
+      var answered = false;
+
+      function startRound(levelIdx, fixedWords) {
+        var queue;
+        if (fixedWords && fixedWords.length) {
+          queue = shuffle(fixedWords).map(function (w) { return { word: w, level: levelIdx }; });
+        } else {
+          queue = shuffle(LEVELS[levelIdx].words).slice(0, 10).map(function (w) { return { word: w, level: levelIdx }; });
+        }
+        round = {
+          level: levelIdx,
+          queue: queue,
+          idx: 0,
+          score: 0,
+          missed: [],
+          label: (fixedWords ? "Tricky ones · " : "") + "Level " + (levelIdx + 1) + " — " + LEVELS[levelIdx].name
+        };
+        showView("practice");
+        loadWord();
+      }
+
+      function currentItem() { return round.queue[round.idx]; }
+
+      function loadWord() {
+        answered = false;
+        heard = [];
+        renderHeard();
+        $("typeInput").value = "";
+        $("feedback").className = "feedback";
+        $("answerArea").style.display = "";
+        $("roundPos").textContent = "Word " + (round.idx + 1) + " of " + round.queue.length;
+        $("roundScore").textContent = round.score;
+        $("progressFill").style.width = (round.idx / round.queue.length * 100) + "%";
+        $("progressTrack").setAttribute("aria-valuemax", round.queue.length);
+        $("progressTrack").setAttribute("aria-valuenow", round.idx);
+        $("promptLabel").textContent = "Level " + (round.level + 1) + " · Listen to the word";
+        var w = currentItem().word;
+        var letters = normalize(w).replace(/ /g, "").length;
+        $("hintLine").textContent = "This word has " + letters + " letter" + (letters === 1 ? "" : "s") + (w.indexOf(" ") >= 0 ? " (it has a space in it!)" : "") + (w.indexOf("-") >= 0 ? " (it has a hyphen in it!)" : "") + ".";
+        setMode(mode);
+        maybePrecheckMic();
+        // Pronounce shortly after the card appears.
+        setTimeout(function () { speakWord(w, false); }, 350);
+      }
+
+      function setMode(m) {
+        mode = m;
+        $("tabSay").setAttribute("aria-selected", m === "say" ? "true" : "false");
+        $("tabType").setAttribute("aria-selected", m === "type" ? "true" : "false");
+        $("sayZone").hidden = m !== "say";
+        $("typeZone").hidden = m !== "type";
+        if (m === "type") { setTimeout(function () { $("typeInput").focus(); }, 60); }
+      }
+
+      /* ================= Voice spelling ================= */
+      var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      var recog = null;
+      var listening = false;
+
+      var LETTER_WORDS = {
+        a: "a", ay: "a", eh: "a",
+        b: "b", bee: "b", be: "b",
+        c: "c", see: "c", sea: "c", cee: "c",
+        d: "d", dee: "d",
+        e: "e", ee: "e",
+        f: "f", eff: "f", ef: "f",
+        g: "g", gee: "g",
+        h: "h", aitch: "h",
+        i: "i", eye: "i",
+        j: "j", jay: "j",
+        k: "k", kay: "k",
+        l: "l", el: "l", ell: "l",
+        m: "m", em: "m",
+        n: "n", en: "n",
+        o: "o", oh: "o", owe: "o",
+        p: "p", pee: "p", pea: "p",
+        q: "q", cue: "q", queue: "q", kew: "q",
+        r: "r", ar: "r", are: "r",
+        s: "s", ess: "s",
+        t: "t", tee: "t", tea: "t",
+        u: "u", you: "u", ewe: "u", yew: "u",
+        v: "v", vee: "v",
+        w: "w",
+        x: "x", ex: "x",
+        y: "y", why: "y",
+        z: "z", zee: "z", zed: "z",
+        space: " ", hyphen: "-", dash: "-", apostrophe: "'"
+      };
+
+      function parseSpelling(transcript) {
+        var tokens = transcript.toLowerCase().replace(/[^a-z\s-]/g, " ").split(/\s+/).filter(Boolean);
+        var out = [];
+        for (var i = 0; i < tokens.length; i++) {
+          var tok = tokens[i];
+          if (tok === "double" && i + 1 < tokens.length) {
+            var nxt = LETTER_WORDS[tokens[i + 1]];
+            if (nxt && nxt !== " " && nxt !== "-") { out.push(nxt, nxt); i++; continue; }
+          }
+          if (Object.prototype.hasOwnProperty.call(LETTER_WORDS, tok)) { out.push(LETTER_WORDS[tok]); continue; }
+          if (tok === "doubleyou" || tok === "double-u") { out.push("w"); continue; }
+          if (tok.length === 1) { out.push(tok); continue; }
+          // A merged blob like "bee" is handled above; anything else long is
+          // most likely letters run together — split it.
+          if (tok.length > 1 && tok !== "the" && tok !== "and") {
+            for (var c = 0; c < tok.length; c++) out.push(tok[c]);
+          }
+        }
+        return out;
+      }
+
+      function renderHeard() {
+        var row = $("heardRow");
+        row.innerHTML = "";
+        if (!heard.length) {
+          row.innerHTML = '<span class="heard-empty">Your letters will appear here</span>';
+          return;
+        }
+        heard.forEach(function (ch) {
+          var s = document.createElement("span");
+          if (ch === " ") { s.className = "letter-chip space"; s.textContent = "space"; }
+          else { s.className = "letter-chip"; s.textContent = ch; }
+          row.appendChild(s);
+        });
+      }
+
+      function stopListening() {
+        listening = false;
+        $("micBtn").classList.remove("listening");
+        if (recog) { try { recog.stop(); } catch (e) {} }
+      }
+
+      /* ---- Microphone permission ----
+         Chrome only shows its "Allow microphone?" prompt when the page asks
+         for the mic directly (getUserMedia). Starting speech recognition on
+         its own gets silently blocked — especially when the page is opened
+         inside another app or window — so always ask for the mic first. */
+      var restartCount = 0;
+      var recogErrored = false;
+      var micPrechecked = false;
+
+      function isEmbedded() {
+        try { return window.self !== window.top; } catch (e) { return true; }
+      }
+
+      function showMicHelp(policyBlocked) {
+        $("micHelp").hidden = false;
+        $("micHelpShare").hidden = !policyBlocked;
+        $("micHelpSteps").hidden = !!policyBlocked;
+        $("micRetryBtn").hidden = !!policyBlocked;
+        $("micStatus").textContent = policyBlocked
+          ? "The microphone can't reach this page on the shared link — the keyboard trick below works instead."
+          : "The microphone is blocked — follow the steps below, or tap “Type it instead” and keep spelling.";
+      }
+      function hideMicHelp() { $("micHelp").hidden = true; }
+
+      // Resolves to "granted" | "policy" | "denied" | "no-mic" | "unavailable".
+      function requestMicAccess() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          return Promise.resolve("unavailable");
+        }
+        return navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+          stream.getTracks().forEach(function (t) { t.stop(); });
+          return "granted";
+        }).catch(function (err) {
+          var msg = err && err.message ? String(err.message).toLowerCase() : "";
+          if (msg.indexOf("permissions policy") >= 0 || msg.indexOf("permission policy") >= 0) return "policy";
+          if (err && err.name === "NotFoundError") return "no-mic";
+          if (err && (err.name === "NotAllowedError" || err.name === "SecurityError")) {
+            // A plain denial inside an embedded window is usually that
+            // window's policy, not the Chrome setting the user just allowed.
+            return isEmbedded() ? "policy" : "denied";
+          }
+          return "denied";
+        });
+      }
+
+      function maybePrecheckMic() {
+        if (micPrechecked || !SR) return;
+        micPrechecked = true;
+        if (!navigator.permissions || !navigator.permissions.query) return;
+        try {
+          navigator.permissions.query({ name: "microphone" }).then(function (res) {
+            if (res.state === "denied" && mode === "say" && !answered) {
+              showMicHelp(isEmbedded());
+            }
+          }).catch(function () {});
+        } catch (e) {}
+      }
+
+      function startListening() {
+        if (!SR) return;
+        if (listening) { stopListening(); $("micStatus").textContent = "Stopped. Tap the microphone to spell again, or check your spelling."; return; }
+        stopListening();
+        hideMicHelp();
+        $("micStatus").textContent = "Asking Chrome for the microphone — tap Allow if it asks…";
+        requestMicAccess().then(function (result) {
+          if (result === "granted" || result === "unavailable") { beginRecognition(); return; }
+          if (result === "no-mic") {
+            $("micStatus").textContent = "No microphone was found on this device — “Type it” will work.";
+            showMicHelp(false);
+            return;
+          }
+          showMicHelp(result === "policy");
+        });
+      }
+
+      function beginRecognition() {
+        stopListening();
+        restartCount = 0;
+        recogErrored = false;
+        recog = new SR();
+        recog.lang = "en-US";
+        recog.continuous = true;
+        recog.interimResults = true;
+        var baseHeard = heard.slice();
+        recog.onresult = function (ev) {
+          var finalTxt = "", interimTxt = "";
+          for (var i = 0; i < ev.results.length; i++) {
+            if (ev.results[i].isFinal) finalTxt += " " + ev.results[i][0].transcript;
+            else interimTxt += " " + ev.results[i][0].transcript;
+          }
+          heard = baseHeard.concat(parseSpelling(finalTxt + " " + interimTxt));
+          renderHeard();
+        };
+        recog.onerror = function (ev) {
+          recogErrored = true;
+          stopListening();
+          if (ev.error === "not-allowed" || ev.error === "service-not-allowed") {
+            showMicHelp(isEmbedded());
+          } else if (ev.error === "audio-capture") {
+            $("micStatus").textContent = "No microphone was found on this device — “Type it” will work.";
+            showMicHelp(false);
+          } else if (ev.error === "no-speech") {
+            $("micStatus").textContent = "I didn't hear anything — tap the microphone and try again.";
+          } else {
+            $("micStatus").textContent = "Listening stopped. Tap the microphone to try again, or use “Type it”.";
+          }
+        };
+        recog.onend = function () {
+          // Chrome sometimes ends recognition on its own; restart a few
+          // times at most, and never after an error.
+          if (listening && !recogErrored && restartCount < 3) {
+            restartCount++;
+            try { recog.start(); } catch (e) { listening = false; $("micBtn").classList.remove("listening"); }
+          } else if (listening) {
+            listening = false;
+            $("micBtn").classList.remove("listening");
+          }
+        };
+        try {
+          recog.start();
+          listening = true;
+          $("micBtn").classList.add("listening");
+          $("micStatus").textContent = "Listening… spell it out loud, one letter at a time. Tap the microphone again when you're done.";
+        } catch (e) {
+          $("micStatus").textContent = "Couldn't start listening — try “Type it” instead.";
+        }
+      }
+
+      /* ================= Checking ================= */
+      /* Keyboard dictation lands in the type box as letter names or spaced
+         letters ("see ay tee", "c a t"). When every token in the box is a
+         letter, a letter name, or "double" / "space" / "hyphen", read it as
+         a dictated spelling and parse it with the voice parser. Anything
+         else — a single string, or real words like "a cappella" — is
+         checked exactly as typed. */
+      function interpretTyped(raw) {
+        var s = (raw || "").trim();
+        if (!s) return { text: "", dictated: false };
+        var tokens = s.split(/\s+/).filter(Boolean);
+        if (tokens.length < 2) return { text: s, dictated: false };
+        for (var i = 0; i < tokens.length; i++) {
+          var t = tokens[i].toLowerCase().replace(/[^a-z-]/g, "");
+          if (t === "double" || t === "doubleyou" || t === "double-u") continue;
+          if (t.length === 1) continue;
+          if (Object.prototype.hasOwnProperty.call(LETTER_WORDS, t)) continue;
+          return { text: s, dictated: false };
+        }
+        var letters = parseSpelling(s);
+        if (!letters.length) return { text: s, dictated: false };
+        return { text: letters.join(""), dictated: true };
+      }
+
+      function chipRow(text, correctText) {
+        // correctText null → plain row of the attempt
+        var wrap = document.createElement("div");
+        wrap.className = "compare-row";
+        var normCorrect = correctText ? normalize(correctText) : null;
+        var normText = normalize(text);
+        for (var i = 0; i < normText.length; i++) {
+          var ch = normText[i];
+          var s = document.createElement("span");
+          s.className = "cmp-chip";
+          if (ch === " ") { s.classList.add("space"); s.textContent = "space"; }
+          else s.textContent = ch;
+          if (normCorrect !== null) {
+            if (i < normCorrect.length && normCorrect[i] === ch) s.classList.add("ok");
+            else s.classList.add("no");
+          }
+          wrap.appendChild(s);
+        }
+        if (!normText.length) {
+          var e = document.createElement("span");
+          e.className = "heard-empty"; e.textContent = "(nothing)";
+          wrap.appendChild(e);
+        }
+        return wrap;
+      }
+
+      function checkAnswer() {
+        if (answered || !round) return;
+        var attempt, dictated = false;
+        if (mode === "say") {
+          attempt = heard.join("");
+        } else {
+          var interp = interpretTyped($("typeInput").value);
+          attempt = interp.text;
+          dictated = interp.dictated;
+        }
+        if (!normalize(attempt)) {
+          if (mode === "say") $("micStatus").textContent = "Spell the word first — tap the microphone and say the letters.";
+          else $("typeInput").focus();
+          return;
+        }
+        stopListening();
+        answered = true;
+        var item = currentItem();
+        var word = item.word;
+        var st = stats[item.level];
+        st.attempted++;
+        var isRight = normalize(attempt) === normalize(word);
+
+        if (isRight) {
+          round.score++;
+          st.correct++;
+          st.streaks[word] = (st.streaks[word] || 0) + 1;
+          if (st.streaks[word] >= 3) st.mastered[word] = true;
+          delete st.tricky[word];
+        } else {
+          st.streaks[word] = 0;
+          st.tricky[word] = true;
+          round.missed.push(item);
+        }
+        $("roundScore").textContent = round.score;
+        $("progressFill").style.width = ((round.idx + 1) / round.queue.length * 100) + "%";
+        $("progressTrack").setAttribute("aria-valuenow", round.idx + 1);
+
+        $("answerArea").style.display = "none";
+        var fb = $("feedback");
+        fb.className = "feedback show " + (isRight ? "correct" : "wrong");
+        $("starRow").textContent = isRight ? "★ ★ ★" : "";
+        $("feedbackTitle").textContent = isRight ? "Correct! Great spelling!" : "Not quite — let's look closely.";
+        if (isRight) {
+          $("feedbackText").textContent = st.mastered[word]
+            ? "You spelled “" + word + "” right 3 times in a row — it's mastered!"
+            : "You spelled “" + word + "” perfectly.";
+        } else {
+          $("feedbackText").textContent = "The green letters are the ones you got right, in the right place.";
+        }
+        var heardEl = $("feedbackHeard");
+        if (dictated) {
+          heardEl.hidden = false;
+          heardEl.textContent = "Heard as: " + attempt.split("").map(function (ch) {
+            return ch === " " ? "space" : ch === "-" ? "hyphen" : ch.toUpperCase();
+          }).join(" — ");
+        } else {
+          heardEl.hidden = true;
+          heardEl.textContent = "";
+        }
+        var box = $("compareBox");
+        box.innerHTML = "";
+        var l1 = document.createElement("div"); l1.className = "row-label"; l1.textContent = "You spelled";
+        box.appendChild(l1); box.appendChild(chipRow(attempt, word));
+        var l2 = document.createElement("div"); l2.className = "row-label"; l2.textContent = "Correct spelling";
+        box.appendChild(l2); box.appendChild(chipRow(word, word));
+        $("nextBtn").textContent = round.idx + 1 >= round.queue.length ? "See my score →" : "Next word →";
+        speakWord(isRight ? "Correct!" : word, false);
+        if (!isRight) setTimeout(function () { speakWord(word, true); }, 1400);
+      }
+
+      function nextWord() {
+        round.idx++;
+        if (round.idx >= round.queue.length) { endRound(); return; }
+        loadWord();
+      }
+
+      function endRound() {
+        stopListening();
+        roundsLog.push({ label: round.label, score: round.score, total: round.queue.length });
+        $("resultsScore").textContent = round.score + "/" + round.queue.length;
+        var pct = round.queue.length ? round.score / round.queue.length : 0;
+        $("resultsTitle").textContent = pct === 1 ? "Perfect round!" : pct >= 0.7 ? "Round complete — great job!" : "Round complete!";
+        $("resultsText").textContent = pct === 1
+          ? "Every single word, spelled right. Amazing!"
+          : pct >= 0.7
+            ? "Strong spelling! The tricky ones below are worth one more try."
+            : "Good practice! Every miss is a word you're learning — try the tricky ones again.";
+        var missedWrap = $("resultsMissedWrap");
+        var missedBox = $("resultsMissed");
+        missedBox.innerHTML = "";
+        if (round.missed.length) {
+          missedWrap.hidden = false;
+          var seen = {};
+          round.missed.forEach(function (m) {
+            if (seen[m.word]) return; seen[m.word] = true;
+            var s = document.createElement("span"); s.className = "w"; s.textContent = m.word;
+            missedBox.appendChild(s);
+          });
+          $("retryMissedBtn").hidden = false;
+        } else {
+          missedWrap.hidden = true;
+          $("retryMissedBtn").hidden = true;
+        }
+        showView("results");
+      }
+
+      /* ================= Wiring ================= */
+      $("speakBtn").addEventListener("click", function () { if (round) speakWord(currentItem().word, false); });
+      $("slowBtn").addEventListener("click", function () { if (round) speakWord(currentItem().word, true); });
+      $("tabSay").addEventListener("click", function () { setMode("say"); });
+      $("tabType").addEventListener("click", function () { stopListening(); setMode("type"); });
+      $("micBtn").addEventListener("click", startListening);
+      $("micRetryBtn").addEventListener("click", startListening);
+      $("micUseTypeBtn").addEventListener("click", function () { stopListening(); hideMicHelp(); setMode("type"); });
+      $("undoLetterBtn").addEventListener("click", function () { heard.pop(); renderHeard(); });
+      $("clearHeardBtn").addEventListener("click", function () { heard = []; renderHeard(); });
+      $("checkBtn").addEventListener("click", checkAnswer);
+      $("nextBtn").addEventListener("click", nextWord);
+      $("typeInput").addEventListener("keydown", function (e) { if (e.key === "Enter") checkAnswer(); });
+      $("quitBtn").addEventListener("click", function () { stopListening(); if ("speechSynthesis" in window) window.speechSynthesis.cancel(); renderHome(); showView("home"); });
+      $("againBtn").addEventListener("click", function () { startRound(round.level, null); });
+      $("retryMissedBtn").addEventListener("click", function () {
+        var words = [];
+        var seen = {};
+        round.missed.forEach(function (m) { if (!seen[m.word]) { seen[m.word] = true; words.push(m.word); } });
+        startRound(round.level, words);
+      });
+      $("homeBtn").addEventListener("click", function () { renderHome(); showView("home"); });
+      $("trickyAllBtn").addEventListener("click", function () {
+        var tricky = allTricky();
+        if (!tricky.length) return;
+        // Mixed-level tricky round: queue carries each word's own level for stats.
+        round = {
+          level: tricky[0].level,
+          queue: shuffle(tricky.map(function (t) { return { word: t.word, level: t.level }; })),
+          idx: 0, score: 0, missed: [],
+          label: "Tricky ones · all levels"
+        };
+        showView("practice");
+        loadWord();
+      });
+
+      if (!SR) {
+        $("voiceNote").textContent = "Voice spelling isn't available in this browser — “Type it” works everywhere.";
+        setMode("type");
+      } else {
+        $("voiceNote").textContent = "Tip: say each letter clearly, like “B — E — E”. Say “space” or “hyphen” if the word has one.";
+      }
+
+      renderHome();
+    </script>
+  </body>
+</html>
