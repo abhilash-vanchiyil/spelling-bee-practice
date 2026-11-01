@@ -232,8 +232,13 @@
         display: inline-grid; place-items: center;
         background: var(--surface-2); border: 2px solid var(--charcoal); border-radius: 10px;
         font-family: "Fredoka", sans-serif; font-size: 22px; font-weight: 600; text-transform: uppercase;
+        cursor: pointer; color: var(--ink); position: relative;
+        transition: transform .08s ease, background .12s ease, border-color .12s ease;
       }
+      .letter-chip:hover, .letter-chip:focus-visible { background: var(--bad-bg); border-color: var(--bad); }
+      .letter-chip:active { transform: scale(.94); }
       .letter-chip.space { min-width: 58px; font-size: 12px; text-transform: none; color: var(--ink-soft); border-style: dashed; }
+      .heard-hint { font-size: 13.5px; color: var(--ink-soft); margin: 6px 0 0; font-weight: 800; }
       .heard-empty { color: var(--ink-soft); font-size: 15px; }
       .heard-tools { display: flex; gap: 8px; justify-content: center; margin-top: 8px; flex-wrap: wrap; }
       .tool-btn {
@@ -365,6 +370,7 @@
               </button>
               <p class="mic-status" id="micStatus">Tap the microphone, then spell the word out loud — letter by letter.</p>
               <div class="heard-row" id="heardRow" aria-live="polite"><span class="heard-empty">Your letters will appear here</span></div>
+              <p class="heard-hint" id="heardHint" hidden>Tap a letter to remove it</p>
               <div class="heard-tools">
                 <button class="tool-btn" id="undoLetterBtn" type="button">⌫ Remove last letter</button>
                 <button class="tool-btn" id="clearHeardBtn" type="button">Start over</button>
@@ -408,8 +414,10 @@
             <p id="feedbackHeard" class="heard-as" hidden></p>
             <div class="compare" id="compareBox"></div>
             <div class="check-row">
+              <button class="btn" id="retryBtn" type="button" hidden>✏️ Fix my spelling — try again</button>
               <button class="btn primary" id="nextBtn" type="button">Next word →</button>
             </div>
+            <p class="voice-note" id="retryNote" hidden>Tap “Fix my spelling” to go back, tap a wrong letter to remove it (or edit your typed answer), and check the same word again.</p>
           </div>
         </div>
       </section>
@@ -485,31 +493,93 @@
       }
 
       /* ================= Speech (pronouncer) ================= */
+      /* Speak-only respellings: audio says these forms, the checked answer
+         stays the printed word. Keys are lower-cased printed words. */
+      var PRONUNCIATION = {
+        "gloucester": "Gloss-ter",
+        "éclair": "ay-KLAIR",
+        "eclair": "ay-KLAIR",
+        "duende": "dwen-day",
+        "prosciutto": "pro-SHOO-toh",
+        "schnauzer": "SHNOW-zer",
+        "dachshund": "DAKS-hund",
+        "rendezvous": "RAHN-day-voo",
+        "forsythia": "for-SITH-ee-a",
+        "yakuza": "YAH-koo-zah",
+        "amharic": "am-HAR-ik",
+        "eritrea": "air-ih-TREE-a",
+        "aphrodite": "af-ro-DY-tee",
+        "salicylic acid": "sal-ih-SIL-ik acid",
+        "bildungsroman": "BIL-doongs-ro-mahn",
+        "cappadocia": "kap-a-DOH-kee-a",
+        "spes phthisica": "spes TIZ-ih-ka",
+        "mysticetes": "MISS-tih-seets",
+        "trichobothria": "trik-oh-BOTH-ree-a",
+        "stomatopods": "STOH-ma-toh-pods",
+        "solenodon": "so-LEN-oh-don",
+        "bogong moth": "BOH-gong moth",
+        "krio": "KREE-oh",
+        "tripoli": "TRIP-oh-lee"
+      };
+      function speakableText(word) {
+        if (!word) return word;
+        var key = String(word).toLowerCase().trim();
+        if (Object.prototype.hasOwnProperty.call(PRONUNCIATION, key)) return PRONUNCIATION[key];
+        // Accent-stripped fallback key (éclair stored without accent too)
+        var stripped = key.normalize("NFD").replace(/[̀-ͯ]/g, "");
+        if (Object.prototype.hasOwnProperty.call(PRONUNCIATION, stripped)) return PRONUNCIATION[stripped];
+        return word;
+      }
       var ttsVoice = null;
+      var voicesReady = false;
       function pickVoice() {
         if (!("speechSynthesis" in window)) return;
         var vs = window.speechSynthesis.getVoices();
-        for (var i = 0; i < vs.length; i++) {
-          if (/^en[-_]US/i.test(vs[i].lang)) { ttsVoice = vs[i]; return; }
-        }
-        for (var j = 0; j < vs.length; j++) {
-          if (/^en/i.test(vs[j].lang)) { ttsVoice = vs[j]; return; }
-        }
+        if (!vs || !vs.length) return;
+        voicesReady = true;
+        function isEnUS(v) { return /^en[-_]US/i.test(v.lang || ""); }
+        function isEn(v) { return /^en([-_]|$)/i.test(v.lang || ""); }
+        function nameHas(v, re) { return re.test(v.name || ""); }
+        var i, v;
+        // 1) Google US English — clearest on Chrome / Android tablets
+        for (i = 0; i < vs.length; i++) { v = vs[i]; if (/google us english/i.test(v.name || "")) { ttsVoice = v; return; } }
+        for (i = 0; i < vs.length; i++) { v = vs[i]; if (/google/i.test(v.name || "") && isEnUS(v)) { ttsVoice = v; return; } }
+        // 2) Any natural / premium / enhanced / neural en-US voice
+        for (i = 0; i < vs.length; i++) { v = vs[i]; if (isEnUS(v) && nameHas(v, /natural|premium|enhanced|neural|wavenet|studio/i)) { ttsVoice = v; return; } }
+        // Prefer well-known high-quality US voices by name when present
+        for (i = 0; i < vs.length; i++) { v = vs[i]; if (isEnUS(v) && nameHas(v, /samantha|zira|aria|jenny|guy|christopher/i)) { ttsVoice = v; return; } }
+        // 3) Any en-US voice
+        for (i = 0; i < vs.length; i++) { v = vs[i]; if (isEnUS(v)) { ttsVoice = v; return; } }
+        // 4) Any natural/premium English voice, then any English voice
+        for (i = 0; i < vs.length; i++) { v = vs[i]; if (isEn(v) && nameHas(v, /natural|premium|enhanced|neural|google/i)) { ttsVoice = v; return; } }
+        for (i = 0; i < vs.length; i++) { v = vs[i]; if (isEn(v)) { ttsVoice = v; return; } }
+        ttsVoice = vs[0];
       }
       if ("speechSynthesis" in window) {
         pickVoice();
+        // Voices often load async — without this the first word uses a robotic fallback.
+        if (window.speechSynthesis.addEventListener) {
+          window.speechSynthesis.addEventListener("voiceschanged", pickVoice);
+        }
         window.speechSynthesis.onvoiceschanged = pickVoice;
+        // Warm-up call so the list is populated before the first word.
+        try { window.speechSynthesis.getVoices(); } catch (e) {}
       }
       function speakWord(word, slow) {
         if (!("speechSynthesis" in window)) {
           $("hintLine").textContent = "This browser can't speak the words out loud — ask a grown-up to read the word to you.";
           return;
         }
+        // Re-pick in case voices arrived after page load.
+        if (!ttsVoice || !voicesReady) pickVoice();
         window.speechSynthesis.cancel();
-        var u = new SpeechSynthesisUtterance(word);
+        var text = speakableText(word);
+        var u = new SpeechSynthesisUtterance(text);
         u.lang = "en-US";
-        if (ttsVoice) u.voice = ttsVoice;
-        u.rate = slow ? 0.55 : 0.92;
+        if (ttsVoice) { u.voice = ttsVoice; u.lang = ttsVoice.lang || "en-US"; }
+        u.rate = slow ? 0.6 : 0.87;
+        u.pitch = 1;
+        u.volume = 1;
         var btn = slow ? $("slowBtn") : $("speakBtn");
         u.onstart = function () { btn.classList.add("playing"); };
         u.onend = u.onerror = function () { btn.classList.remove("playing"); };
@@ -627,6 +697,8 @@
         renderHeard();
         $("typeInput").value = "";
         $("feedback").className = "feedback";
+        if ($("retryBtn")) $("retryBtn").hidden = true;
+        if ($("retryNote")) $("retryNote").hidden = true;
         $("answerArea").style.display = "";
         $("roundPos").textContent = "Word " + (round.idx + 1) + " of " + round.queue.length;
         $("roundScore").textContent = round.score;
@@ -711,14 +783,29 @@
       function renderHeard() {
         var row = $("heardRow");
         row.innerHTML = "";
+        var hint = $("heardHint");
         if (!heard.length) {
           row.innerHTML = '<span class="heard-empty">Your letters will appear here</span>';
+          if (hint) hint.hidden = true;
           return;
         }
-        heard.forEach(function (ch) {
-          var s = document.createElement("span");
+        if (hint) hint.hidden = false;
+        heard.forEach(function (ch, idx) {
+          var s = document.createElement("button");
+          s.type = "button";
           if (ch === " ") { s.className = "letter-chip space"; s.textContent = "space"; }
           else { s.className = "letter-chip"; s.textContent = ch; }
+          s.setAttribute("data-heard-idx", String(idx));
+          s.setAttribute("aria-label", "Remove letter " + (ch === " " ? "space" : ch.toUpperCase()) + " at position " + (idx + 1));
+          s.title = "Tap to remove this letter";
+          s.addEventListener("click", function () {
+            // Stop recognition first so a live result doesn't overwrite the edit.
+            if (typeof stopListening === "function") stopListening();
+            heard.splice(idx, 1);
+            renderHeard();
+            var st = $("micStatus");
+            if (st) st.textContent = heard.length ? "Removed that letter. Tap a letter to remove it, tap the microphone to add more, or check your spelling." : "All letters cleared — tap the microphone to spell again.";
+          });
           row.appendChild(s);
         });
       }
@@ -950,12 +1037,16 @@
         fb.className = "feedback show " + (isRight ? "correct" : "wrong");
         $("starRow").textContent = isRight ? "★ ★ ★" : "";
         $("feedbackTitle").textContent = isRight ? "Correct! Great spelling!" : "Not quite — let's look closely.";
+        var retryBtnEl = $("retryBtn");
+        var retryNoteEl = $("retryNote");
+        if (retryBtnEl) retryBtnEl.hidden = isRight;
+        if (retryNoteEl) retryNoteEl.hidden = isRight;
         if (isRight) {
           $("feedbackText").textContent = st.mastered[word]
             ? "You spelled “" + word + "” right 3 times in a row — it's mastered!"
             : "You spelled “" + word + "” perfectly.";
         } else {
-          $("feedbackText").textContent = "The green letters are the ones you got right, in the right place.";
+          $("feedbackText").textContent = "The green letters are the ones you got right, in the right place. You can fix your spelling and try this same word again.";
         }
         var heardEl = $("feedbackHeard");
         if (dictated) {
@@ -976,6 +1067,36 @@
         $("nextBtn").textContent = round.idx + 1 >= round.queue.length ? "See my score →" : "Next word →";
         speakWord(isRight ? "Correct!" : word, false);
         if (!isRight) setTimeout(function () { speakWord(word, true); }, 1400);
+      }
+
+      function retrySameWord() {
+        if (!round) return;
+        if ("speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
+        stopListening();
+        // Undo the missed entry for this attempt so re-checking doesn't duplicate it;
+        // if she gets it right on the retry, the word won't stay in the missed list for this turn.
+        var item = currentItem();
+        if (item && round.missed && round.missed.length) {
+          for (var i = round.missed.length - 1; i >= 0; i--) {
+            if (round.missed[i].word === item.word) { round.missed.splice(i, 1); break; }
+          }
+        }
+        answered = false;
+        $("feedback").className = "feedback";
+        $("answerArea").style.display = "";
+        // Restore progress to the current word (checkAnswer had advanced the bar)
+        $("progressFill").style.width = (round.idx / round.queue.length * 100) + "%";
+        $("progressTrack").setAttribute("aria-valuenow", round.idx);
+        // Preserve the previous attempt: `heard` (Say-it) and the type box are untouched.
+        renderHeard();
+        setMode(mode);
+        if (mode === "say") {
+          $("micStatus").textContent = "Fix your spelling: tap a wrong letter to remove it, tap the microphone to add letters, then check again.";
+        } else {
+          setTimeout(function () { var inp = $("typeInput"); inp.focus(); try { inp.setSelectionRange(inp.value.length, inp.value.length); } catch (e) {} }, 60);
+        }
+        // Re-speak the word so she can listen again while editing
+        setTimeout(function () { if (round) speakWord(currentItem().word, false); }, 250);
       }
 
       function nextWord() {
@@ -1025,6 +1146,7 @@
       $("undoLetterBtn").addEventListener("click", function () { heard.pop(); renderHeard(); });
       $("clearHeardBtn").addEventListener("click", function () { heard = []; renderHeard(); });
       $("checkBtn").addEventListener("click", checkAnswer);
+      $("retryBtn").addEventListener("click", retrySameWord);
       $("nextBtn").addEventListener("click", nextWord);
       $("typeInput").addEventListener("keydown", function (e) { if (e.key === "Enter") checkAnswer(); });
       $("quitBtn").addEventListener("click", function () { stopListening(); if ("speechSynthesis" in window) window.speechSynthesis.cancel(); renderHome(); showView("home"); });
